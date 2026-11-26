@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Month of Love 2027 – Book a table at Tiffanys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ====== SETTINGS: paste your Google Apps Script web-app URL into API_URL (see SETUP.md) ====== */
+  :root{
+    --wine:#7d1a2c; --wine-d:#5e1120; --rose:#c9566b; --blush:#f6e3e2; --blush-2:#fbf1ef;
+    --cream:#fffaf6; --ink:#33191e; --muted:#7f6266; --line:#ead4d2; --ok:#2f7a4b; --warn:#b4542a;
+    --serif:"Cormorant Garamond",Georgia,serif; --sans:"Jost",system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--cream);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .hero{background:radial-gradient(120% 90% at 50% 0%,#9a2a3e 0%,var(--wine) 45%,var(--wine-d) 100%);color:#fff;text-align:center;padding:56px 20px 88px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;inset:auto 0 -1px 0;height:48px;background:var(--cream);border-radius:50% 50% 0 0/100% 100% 0 0}
+  .eyebrow{letter-spacing:.32em;text-transform:uppercase;font-size:12px;opacity:.85;font-weight:500}
+  .hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(40px,7vw,64px);margin:10px 0 6px;line-height:1.05}
+  .hero h1 em{font-style:italic;color:#ffd6db}
+  .hero p{margin:0 auto;max-width:520px;opacity:.9}
+  .hearts{position:absolute;inset:0;pointer-events:none;opacity:.12}
+  main{max-width:760px;margin:-56px auto 60px;padding:0 16px;position:relative;z-index:1}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px -18px rgba(94,17,32,.35);padding:28px}
+  @media(max-width:560px){.card{padding:20px 16px}}
+  .steps{display:flex;gap:6px;margin:0 0 22px}
+  .steps span{flex:1;height:4px;border-radius:4px;background:var(--line);transition:background .3s}
+  .steps span.on{background:var(--rose)}
+  h2{font-family:var(--serif);font-weight:600;font-size:30px;margin:0 0 4px;color:var(--wine)}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .days{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .day{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--blush-2)}
+  .day h3{margin:0 0 10px;font-family:var(--serif);font-size:21px;font-weight:600}
+  .day h3 small{display:block;font-family:var(--sans);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer}
+  .pill{border:1.5px solid var(--wine);background:#fff;color:var(--wine);border-radius:999px;padding:8px 16px;font-weight:500;transition:.15s}
+  .pill:hover{background:var(--blush)}
+  .pill.sel{background:var(--wine);color:#fff}
+  .pill small{display:block;font-size:11px;opacity:.75;font-weight:400}
+  .guests{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:480px){.guests{grid-template-columns:1fr}}
+  .stepper{border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+  .stepper label{font-weight:500}
+  .stepper label small{display:block;color:var(--muted);font-weight:400;font-size:13px}
+  .ctrl{display:flex;align-items:center;gap:12px}
+  .ctrl button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--wine);background:#fff;color:var(--wine);font-size:20px;line-height:1}
+  .ctrl button:disabled{opacity:.3;cursor:not-allowed}
+  .ctrl output{min-width:22px;text-align:center;font-size:20px;font-weight:600}
+  .note{background:var(--blush-2);border-left:3px solid var(--rose);padding:10px 14px;border-radius:8px;font-size:14px;color:var(--muted);margin:16px 0 0}
+  .times{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+  .slot{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 8px;text-align:center;transition:.15s}
+  .slot b{display:block;font-size:17px}
+  .slot span{font-size:12px;color:var(--muted)}
+  .slot:not(:disabled):hover{border-color:var(--rose);background:var(--blush-2)}
+  .slot.sel{border-color:var(--wine);background:var(--wine);color:#fff}
+  .slot.sel span{color:#ffd6db}
+  .slot:disabled{cursor:not-allowed;background:#f7f3f2;color:#b9a7a9}
+  .slot.low span{color:var(--warn)}
+  .gap{grid-column:1/-1;text-align:center;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:4px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line)}
+  form .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:480px){form .row{grid-template-columns:1fr}}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .field label{font-weight:500;font-size:14px}
+  .field label i{font-style:normal;color:var(--muted);font-weight:400}
+  input,textarea,select{font:inherit;border:1px solid #dcc3c1;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);width:100%}
+  input:focus,textarea:focus{outline:2px solid var(--rose);outline-offset:1px;border-color:transparent}
+  textarea{min-height:70px;resize:vertical}
+  .summary{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--blush-2);margin:6px 0 16px}
+  .summary dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}
+  .summary dt{color:var(--muted)} .summary dd{margin:0;font-weight:500}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin:0 0 18px}
+  .check input{width:18px;height:18px;margin-top:2px;accent-color:var(--wine);flex:none}
+  .actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px}
+  .btn{border:0;border-radius:999px;padding:13px 26px;font-weight:600;background:var(--wine);color:#fff;transition:.15s;letter-spacing:.02em}
+  .btn:hover{background:var(--wine-d)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .link{background:none;border:0;color:var(--muted);text-decoration:underline;padding:8px 0}
+  .err{background:#fdecea;color:#8a1f11;border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:14px}
+  .secure{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin-top:12px;justify-content:flex-end}
+  .done{text-align:center;padding:10px 0}
+  .done .tick{width:64px;height:64px;border-radius:50%;background:var(--blush);display:grid;place-items:center;margin:0 auto 12px;color:var(--wine);font-size:30px}
+  .ref{font-family:ui-monospace,Menlo,monospace;background:var(--blush-2);padding:2px 8px;border-radius:6px}
+  .staff{border:2px dashed #c79a2b;background:#fffaf0;border-radius:14px;padding:16px;margin:0 0 16px}
+  .staff h4{margin:0 0 10px;color:#8a6510}
+  .radio{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .radio input{width:auto;accent-color:var(--wine)}
+  .demo{background:#fff4d6;color:#6b4e00;text-align:center;font-size:13px;padding:8px}
+  .hidden{display:none!important}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:0 16px 40px}
+</style>
+</head>
+<body>
+<div id="demoBar" class="demo hidden">Preview mode: availability is made up and no payment is taken. Connect the Google Sheet to go live (see SETUP.md).</div>
+<header class="hero">
+  <svg class="hearts" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="#fff"><path d="M40 60c-8-14-30-8-26 8 3 12 26 26 26 26s23-14 26-26c4-16-18-22-26-8z"/>
+    <path d="M350 40c-6-10-22-6-19 6 2 9 19 19 19 19s17-10 19-19c3-12-13-16-19-6z"/>
+    <path d="M310 150c-5-8-17-5-15 5 2 7 15 15 15 15s13-8 15-15c2-10-10-13-15-5z"/>
+    <path d="M90 160c-4-7-14-4-12 4 1 6 12 12 12 12s11-6 12-12c2-8-8-11-12-4z"/></g>
+  </svg>
+  <div class="eyebrow">Tiffanys &nbsp;·&nbsp; February 2027</div>
+  <h1>Month of <em>Love</em></h1>
+  <p>Lunch and dinner sittings on the 6th, 7th, 13th &amp; 14th of February. Reserve your table below.</p>
+</header>
+
+<main>
+  <div class="card" id="app">
+    <div class="steps" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+
+    <!-- STEP 1: guests -->
+    <section data-step="1">
+      <h2>How many guests?</h2>
+      <p class="sub">Up to 12 guests per online booking.</p>
+      <div class="guests">
+        <div class="stepper"><label>Adults</label>
+          <div class="ctrl"><button type="button" data-k="adults" data-d="-1" aria-label="Fewer adults">−</button><output id="adults">2</output><button type="button" data-k="adults" data-d="1" aria-label="More adults">+</button></div></div>
+        <div class="stepper"><label>Children<small>Under 12</small></label>
+          <div class="ctrl"><button type="button" data-k="children" data-d="-1" aria-label="Fewer children">−</button><output id="children">0</output><button type="button" data-k="children" data-d="1" aria-label="More children">+</button></div></div>
+      </div>
+      <p class="note" id="groupNote"></p>
+      <div class="actions"><span></span><button class="btn" data-next>Choose a day</button></div>
+    </section>
+
+    <!-- STEP 2: day + time -->
+    <section data-step="2" class="hidden">
+      <h2>Choose your sitting</h2>
+      <p class="sub" id="partyLine"></p>
+      <div class="days" id="days"></div>
+      <div id="timesWrap" class="hidden" style="margin-top:22px">
+        <h2 style="font-size:24px" id="timesTitle"></h2>
+        <p class="sub" id="timesSub" style="margin-bottom:12px"></p>
+        <div class="times" id="times"></div>
+      </div>
+      <div class="actions"><button class="link" data-back>← Back</button><button class="btn" data-next id="toDetails" disabled>Your details</button></div>
+    </section>
+
+    <!-- STEP 3: details -->
+    <section data-step="3" class="hidden">
+      <h2>Your details</h2>
+      <p class="sub">So we can confirm your booking and look after you on the day.</p>
+      <div id="err3" class="err hidden" role="alert"></div>
+      <form id="details" novalidate>
+        <div id="staffBox" class="staff hidden">
+          <h4>Staff booking (phone)</h4>
+          <div class="row">
+            <div class="field"><label for="pin">Staff PIN</label><input id="pin" type="password" autocomplete="off"></div>
+            <div class="field"><label for="staffName">Staff member</label><input id="staffName" autocomplete="off"></div>
+          </div>
+          <div class="radio"><input type="radio" name="dm" id="dmEft" value="eftpos" checked><label for="dmEft">Deposit already taken on EFTPOS</label></div>
+          <div class="field" id="receiptField" style="margin-left:26px"><label for="receipt">EFTPOS receipt #</label><input id="receipt" autocomplete="off"></div>
+          <div class="radio"><input type="radio" name="dm" id="dmLink" value="link"><label for="dmLink">Text the customer a payment link instead</label></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="firstName">First name</label><input id="firstName" autocomplete="given-name" required></div>
+          <div class="field"><label for="lastName">Last name</label><input id="lastName" autocomplete="family-name" required></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="phone">Mobile</label><input id="phone" type="tel" autocomplete="tel" required></div>
+          <div class="field"><label for="email">Email <i id="emailHint">(for your confirmation)</i></label><input id="email" type="email" autocomplete="email" required></div>
+        </div>
+        <div class="field"><label for="dietary">Dietary requirements <i>(optional)</i></label><input id="dietary" placeholder="e.g. 1 gluten free, 1 vegetarian"></div>
+        <div class="field"><label for="notes">Anything else we should know? <i>(optional)</i></label><textarea id="notes" placeholder="Celebrating something special? Let us know."></textarea></div>
+      </form>
+      <div class="actions"><button class="link" data-back>← Back</button><button class="btn" data-next>Review &amp; pay deposit</button></div>
+    </section>
+
+    <!-- STEP 4: review + pay -->
+    <section data-step="4" class="hidden">
+      <h2>Review &amp; secure your table</h2>
+      <p class="sub">A <b>$<span class="dep">55</span> deposit</b> secures your booking. It will be taken off your bill on the day.</p>
+      <div class="summary"><dl id="summary"></dl></div>
+      <div id="err" class="err hidden" role="alert"></div>
+      <label class="check"><input type="checkbox" id="agree"> <span>I understand a $<span class="dep">55</span> deposit is required to secure this booking and will be deducted from our bill on the day.</span></label>
+      <div class="actions"><button class="link" data-back>← Back</button><button class="btn" id="payBtn" disabled>Pay $<span class="dep">55</span> deposit</button></div>
+      <div class="secure" id="secureLine"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>You’ll enter your card on Stripe’s secure payment page. We never see or store your card details.</div>
+    </section>
+
+    <!-- RESULT -->
+    <section data-step="5" class="hidden"><div class="done" id="result"></div></section>
+  </div>
+</main>
+<footer id="foot"></footer>
+
+<script>
+/* ============================ SETTINGS ============================ */
+const API_URL = "";   // ← paste the Apps Script "Web app" URL here. Leave blank for preview mode.
+/* ================================================================= */
+
+const DEMO = !API_URL;
+const $ = s => document.querySelector(s);
+const state = { step: 1, adults: 2, children: 0, sitting: null, time: null, data: null, staff: new URLSearchParams(location.search).has("staff") };
+
+/* ---------- demo data (only used in preview mode) ---------- */
+function demoData() {
+  const L = [["11:00",1],["11:15",1],["11:30",1],["11:45",0],["12:00",0],["13:00",0],["13:15",0],["13:30",1],["13:45",1],["14:00",1]];
+  const D = L.map(([t,l]) => [String(+t.slice(0,2)+6).padStart(2,"0")+t.slice(2), l]);
+  const S = [["SAT06-L","Saturday 6 February","Lunch",L],["SAT06-D","Saturday 6 February","Dinner",D],["SUN07-L","Sunday 7 February","Lunch",L],
+             ["SAT13-L","Saturday 13 February","Lunch",L],["SAT13-D","Saturday 13 February","Dinner",D],["SUN14-L","Sunday 14 February","Lunch",L]];
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  return { ok: true, venue: { name: "Tiffanys", phone: "07 0000 0000" },
+    rules: { deposit: 55, maxPaxPerSlot: 12, maxTablesPerSlot: 3, maxPartyOnline: 12, largeGroupMin: 8 },
+    sittings: S.map(([id, day, meal, times]) => ({ id, day, meal, slots: times.map(([t, l]) => {
+      const tables = Math.floor(rnd() * 4), pax = tables ? Math.min(12, tables * 2 + Math.floor(rnd() * 5)) : 0;
+      return { time: t, label: lbl(t), large: !!l, pax, tables };
+    }) })) };
+}
+function lbl(t){const [h,m]=t.split(":").map(Number);return ((h+11)%12+1)+":"+String(m).padStart(2,"0")+(h<12?" AM":" PM");}
+
+/* ---------- API ---------- */
+async function api(params, body) {
+  if (body) {
+    const r = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+    return r.json();
+  }
+  const r = await fetch(API_URL + "?" + new URLSearchParams(params));
+  return r.json();
+}
+async function load() {
+  state.data = DEMO ? demoData() : await api({ action: "availability" });
+  if (!state.data.ok) throw new Error(state.data.error || "Could not load availability");
+  const r = state.data.rules;
+  document.querySelectorAll(".dep").forEach(e => e.textContent = r.deposit);
+  $("#foot").innerHTML = `Groups larger than ${r.maxPartyOnline}, or need help? Call ${esc(state.data.venue.name)} on <b>${esc(state.data.venue.phone)}</b>.`;
+}
+
+/* ---------- rules ---------- */
+const total = () => state.adults + state.children;
+function slotStatus(s) {
+  const r = state.data.rules, n = total(), left = r.maxPaxPerSlot - s.pax;
+  if (n >= r.largeGroupMin && !s.large) return { ok: false, text: `Not for groups of ${r.largeGroupMin}+` };
+  if (s.tables >= r.maxTablesPerSlot || left <= 0) return { ok: false, text: "Fully booked" };
+  if (n > left) return { ok: false, text: `Only ${left} seat${left > 1 ? "s" : ""} left` };
+  if (s.tables === r.maxTablesPerSlot - 1 || left - n < 4) return { ok: true, low: true, text: "Last table" };
+  return { ok: true, text: "Available" };
+}
+function sittingFree(st) { return st.slots.some(s => slotStatus(s).ok); }
+
+/* ---------- rendering ---------- */
+function go(step, noScroll) {
+  state.step = step;
+  document.querySelectorAll("[data-step]").forEach(s => s.classList.toggle("hidden", +s.dataset.step !== step));
+  document.querySelectorAll(".steps span").forEach((s, i) => s.classList.toggle("on", i < step));
+  if (step === 2) renderDays();
+  if (step === 4) renderSummary();
+  if (!noScroll) $("#app").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function renderGuests() {
+  const r = state.data.rules, n = total();
+  $("#adults").value = state.adults; $("#children").value = state.children;
+  document.querySelectorAll(".ctrl button").forEach(b => {
+    const k = b.dataset.k, d = +b.dataset.d;
+    b.disabled = d < 0 ? state[k] <= (k === "adults" ? 1 : 0) : n >= r.maxPartyOnline;
+  });
+  $("#groupNote").innerHTML = n >= r.largeGroupMin
+    ? `Groups of ${r.largeGroupMin} or more can book at the start or end of each sitting (11:00–11:30 &amp; 1:30–2:00 for lunch, 5:00–5:30 &amp; 7:30–8:00 for dinner).`
+    : `Bigger group? Groups of ${r.largeGroupMin}+ can book selected times, and for more than ${r.maxPartyOnline} please give us a call.`;
+}
+function renderDays() {
+  $("#partyLine").textContent = `Table for ${total()} (${state.adults} adult${state.adults > 1 ? "s" : ""}${state.children ? `, ${state.children} child${state.children > 1 ? "ren" : ""}` : ""}).`;
+  const byDay = {};
+  state.data.sittings.forEach(s => (byDay[s.day] = byDay[s.day] || []).push(s));
+  $("#days").innerHTML = Object.entries(byDay).map(([day, list]) => {
+    const [dow, ...rest] = day.split(" ");
+    return `<div class="day"><h3><small>${dow}</small>${rest.join(" ")}</h3><div class="pill-row">${list.map(s => {
+      const free = sittingFree(s);
+      return `<button class="pill ${state.sitting === s.id ? "sel" : ""}" data-sit="${s.id}" ${free ? "" : "disabled style='opacity:.4;cursor:not-allowed'"}>${s.meal}<small>${free ? (s.meal === "Lunch" ? "11am – 2pm" : "5pm – 8pm") : "Full"}</small></button>`;
+    }).join("")}</div></div>`;
+  }).join("");
+  renderTimes();
+}
+function renderTimes() {
+  const st = state.data.sittings.find(s => s.id === state.sitting);
+  $("#timesWrap").classList.toggle("hidden", !st);
+  $("#toDetails").disabled = !state.time;
+  if (!st) return;
+  $("#timesTitle").textContent = `${st.day} · ${st.meal}`;
+  $("#timesSub").textContent = "Pick an arrival time.";
+  let html = "";
+  st.slots.forEach(s => {
+    if (s.time === "13:00" || s.time === "19:00") html += `<div class="gap">No bookings ${st.meal === "Lunch" ? "12:15 – 12:45" : "6:15 – 6:45"}</div>`;
+    const v = slotStatus(s);
+    html += `<button class="slot ${v.low ? "low" : ""} ${state.time === s.time ? "sel" : ""}" data-time="${s.time}" ${v.ok ? "" : "disabled"}><b>${s.label}</b><span>${v.text}</span></button>`;
+  });
+  $("#times").innerHTML = html;
+}
+function renderSummary() {
+  const st = state.data.sittings.find(s => s.id === state.sitting), sl = st.slots.find(s => s.time === state.time);
+  const f = id => $("#" + id).value.trim();
+  const rows = [["When", `${st.day} 2027 · ${sl.label}`], ["Sitting", st.meal], ["Guests", `${total()} (${state.adults} adult${state.adults > 1 ? "s" : ""}${state.children ? `, ${state.children} child${state.children > 1 ? "ren" : ""}` : ""})`],
+    ["Name", `${f("firstName")} ${f("lastName")}`], ["Mobile", f("phone")], ["Email", f("email") || "—"]];
+  if (f("dietary")) rows.push(["Dietary", f("dietary")]);
+  if (f("notes")) rows.push(["Notes", f("notes")]);
+  $("#summary").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
+  const eft = state.staff && $("#dmEft").checked;
+  $("#payBtn").innerHTML = eft ? "Confirm booking" : state.staff ? "Create payment link" : `Pay $${state.data.rules.deposit} deposit`;
+  $("#secureLine").classList.toggle("hidden", eft);
+  $("#err").classList.add("hidden");
+}
+function showError(msg) { const e = $("#err"); e.textContent = msg; e.classList.remove("hidden"); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+function result(html) { $("#result").innerHTML = html; go(5); }
+function confirmedHtml(b) {
+  return `<div class="tick">♥</div><h2>You’re booked in!</h2>
+    <p class="sub">${esc(b.day)} 2027 at <b>${esc(b.time)}</b> for ${b.total} guest${b.total > 1 ? "s" : ""}.</p>
+    <p>Booking reference <span class="ref">${esc(b.id)}</span></p>
+    <p class="sub">Your $${state.data.rules.deposit} deposit has been received and will come off your bill on the day.${b.email !== false ? " A confirmation email is on its way." : ""}</p>
+    <button class="btn" onclick="location.href=location.pathname${state.staff ? "+'?staff'" : ""}">${state.staff ? "New booking" : "Done"}</button>`;
+}
+
+/* ---------- validation ---------- */
+function validDetails() {
+  const req = ["firstName", "lastName", "phone"];
+  if (!state.staff) req.push("email");
+  const e3 = $("#err3"); e3.classList.add("hidden");
+  const bad = (msg, id) => { e3.textContent = msg; e3.classList.remove("hidden"); if (id) $("#" + id).focus(); return false; };
+  const names = { firstName: "first name", lastName: "last name", phone: "mobile number", email: "email address" };
+  for (const id of req) if (!$("#" + id).value.trim()) return bad(`Please enter your ${names[id]}.`, id);
+  const em = $("#email").value.trim();
+  if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return bad("Please check the email address.", "email");
+  if (state.staff) {
+    if (!$("#pin").value || !$("#staffName").value.trim()) return bad("Staff PIN and staff member name are needed.", "pin");
+    if ($("#dmEft").checked && !$("#receipt").value.trim()) return bad("Enter the EFTPOS receipt number.", "receipt");
+  }
+  return true;
+}
+
+/* ---------- submit ---------- */
+async function submit() {
+  const btn = $("#payBtn"), label = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = `<span class="spinner"></span>Please wait…`;
+  const f = id => $("#" + id).value.trim();
+  const body = { action: "book", sittingId: state.sitting, time: state.time, adults: state.adults, children: state.children,
+    firstName: f("firstName"), lastName: f("lastName"), phone: f("phone"), email: f("email"), dietary: f("dietary"), notes: f("notes") };
+  if (state.staff) Object.assign(body, { staff: true, pin: $("#pin").value, staffName: f("staffName"),
+    depositMethod: $("#dmEft").checked ? "eftpos" : "link", receipt: f("receipt") });
+  try {
+    if (DEMO) {
+      await new Promise(r => setTimeout(r, 700));
+      const st = state.data.sittings.find(s => s.id === state.sitting);
+      return result(confirmedHtml({ id: "ML-DEMO1", day: st.day, time: lbl(state.time), total: total() }) +
+        `<p class="note" style="text-align:left">Preview mode: in the live version, customers would now be taken to Stripe’s secure page to pay the deposit, then returned here.</p>`);
+    }
+    const res = await api(null, body);
+    if (!res.ok) throw new Error(res.error);
+    if (res.confirmed) return result(confirmedHtml({ ...res.booking, email: !!body.email }));
+    if (state.staff) {
+      return result(`<div class="tick">✉</div><h2>Payment link ready</h2>
+        <p class="sub">Text or email this link to ${esc(body.firstName)}. Their table is held for ${23} hours. It confirms automatically once they pay.</p>
+        <input id="plink" readonly value="${esc(res.checkoutUrl)}" onclick="this.select()">
+        <p><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('plink').value);this.textContent='Copied ✓'">Copy link</button></p>
+        <p>Booking reference <span class="ref">${esc(res.booking.id)}</span></p>
+        <button class="link" onclick="location.href=location.pathname+'?staff'">New booking</button>`);
+    }
+    location.href = res.checkoutUrl;
+  } catch (e) {
+    showError(e.message || "Something went wrong. Please try again or call us.");
+    btn.disabled = false; btn.innerHTML = label;
+    if (!DEMO) { try { await load(); } catch (_) {} }
+  }
+}
+
+/* ---------- returning from Stripe ---------- */
+async function handleReturn() {
+  const q = new URLSearchParams(location.search);
+  if (q.get("session_id")) {
+    result(`<p class="sub">Confirming your payment…</p>`);
+    for (let i = 0; i < 5; i++) {
+      const res = await api({ action: "confirm", session_id: q.get("session_id") });
+      if (res.ok) { history.replaceState(null, "", location.pathname); return result(confirmedHtml(res.booking)); }
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    return result(`<h2>We’re checking your payment</h2><p class="sub">If you were charged, your booking is safe. You’ll get an email shortly, or call us on ${esc(state.data.venue.phone)}.</p>`);
+  }
+  if (q.get("cancel")) {
+    await api({ action: "cancel", booking: q.get("cancel"), t: q.get("t") || "" }).catch(() => {});
+    history.replaceState(null, "", location.pathname + (state.staff ? "?staff" : ""));
+    await load();
+    showToastBack();
+    return true;
+  }
+  return false;
+}
+function showToastBack() {
+  $("#groupNote").insertAdjacentHTML("beforebegin", `<div class="err" style="margin-top:14px">Payment wasn’t completed, so the booking wasn’t made. You can start again below.</div>`);
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.k) { state[t.dataset.k] += +t.dataset.d; state.time = null; renderGuests(); return; }
+  if (t.dataset.sit) { state.sitting = t.dataset.sit; state.time = null; renderDays(); setTimeout(() => $("#timesWrap").scrollIntoView({ behavior: "smooth", block: "nearest" }), 50); return; }
+  if (t.dataset.time) { state.time = t.dataset.time; renderTimes(); return; }
+  if (t.hasAttribute("data-back")) return go(state.step - 1);
+  if (t.hasAttribute("data-next")) {
+    if (state.step === 2 && !state.time) return;
+    if (state.step === 3 && !validDetails()) return;
+    return go(state.step + 1);
+  }
+  if (t.id === "payBtn") return submit();
+});
+$("#agree").addEventListener("change", e => ($("#payBtn").disabled = !e.target.checked));
+document.querySelectorAll("input[name=dm]").forEach(r => r.addEventListener("change", () => $("#receiptField").classList.toggle("hidden", !$("#dmEft").checked)));
+
+(async function init() {
+  if (DEMO) $("#demoBar").classList.remove("hidden");
+  if (state.staff) { $("#staffBox").classList.remove("hidden"); $("#emailHint").textContent = "(optional for phone bookings)"; }
+  try {
+    await load();
+    renderGuests();
+    if (!DEMO && await handleReturn() === false) {}
+    if (state.step === 1) go(1, true);
+  } catch (e) {
+    $("#app").innerHTML = `<div class="err">Online bookings are unavailable right now. Please call us to book.</div>`;
+  }
+})();
+</script>
+</body>
+</html>
